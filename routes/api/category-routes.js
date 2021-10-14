@@ -3,20 +3,38 @@ const { Category, Product } = require('../../models');
 
 // The `/api/categories` endpoint
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   // find all categories
+  try {
+    const categoryData = await Category.findAll({
+      include: [Product],
+    });
+    
+    res.status(200).json(categoryData);
+  } catch (err) {
+    res.status(500).json(err);
+  }
   // be sure to include its associated Products
-  Category.findAll().then((categoryData) => {
-    res.json(categoryData);
-  })
+  
 });
 
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   // find one category by its `id` value
   // be sure to include its associated Products
-  Category.findByPk(req.params.id).then((categoryData) => {
-    res.json(categoryData);
-  })
+  try {
+    const categoryData = await Category.findByPk(req.params.id, {
+      include: [ Product ],
+    });
+
+    if (!categoryData) {
+      res.status(404).json({ message: 'No Category card found with that id!' });
+      return;
+    }
+
+    res.status(200).json(categoryData);
+  } catch (err) {
+    res.status(500).json(err);
+  }
 });
 
 router.post('/', (req, res) => {
@@ -32,6 +50,20 @@ router.post('/', (req, res) => {
 
 router.put('/:id', (req, res) => {
   // update a category by its `id` value
+  Category.update({
+    category_name: req.body.category_name,
+  },
+  {
+    where: {
+      id: req.params.id,
+    },
+  }
+  )
+  .then((updatedBook) => {
+    // Sends the updated book as a json response
+    res.json(updatedBook);
+  })
+  .catch((err) => res.json(err));
 });
 
 router.delete('/:id', (req, res) => {
